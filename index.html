@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teachable Machine Image Model</title>
     
-    <!-- นำเข้า Google Fonts เพื่อความสวยงาม -->
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- นำเข้า Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -40,7 +40,7 @@
         }
 
         h1 {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             margin-bottom: 20px;
             color: #111827;
         }
@@ -49,10 +49,10 @@
             background-color: var(--primary-color);
             color: white;
             border: none;
-            padding: 12px 24px;
+            padding: 14px 24px;
             font-size: 1rem;
             font-weight: 600;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
@@ -85,7 +85,7 @@
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
         }
 
-        /* ตกแต่ง Canvas ของกล้องให้โค้งมนและพอดีกรอบ */
+        /* บังคับให้ Canvas ปรับขนาดพอดีกับกรอบ */
         #webcam-container canvas {
             width: 100% !important;
             height: 100% !important;
@@ -98,24 +98,32 @@
             gap: 10px;
         }
 
-        /* ตกแต่งแถบแสดงผลลัพธ์ */
         .prediction-bar {
             background: #f9fafb;
-            padding: 10px 15px;
+            padding: 12px 16px;
             border-radius: 8px;
             border-left: 4px solid var(--primary-color);
             text-align: left;
             font-size: 0.95rem;
-            font-weight: 500;
             display: flex;
             justify-content: space-between;
+            align-items: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .prediction-bar span {
+            font-weight: 400;
+        }
+
+        .prediction-bar strong {
+            font-weight: 600;
+            color: var(--primary-color);
         }
         
         .timer-badge {
             font-size: 0.8rem;
             color: #6b7280;
-            margin-top: 10px;
+            margin-top: 15px;
         }
     </style>
 </head>
@@ -125,16 +133,11 @@
         <h1>Teachable Machine Image Model</h1>
         <button type="button" class="btn-start" id="start-btn" onclick="init()">เปิดใช้งานกล้อง</button>
         
-        <div id="webcam-container">
-            <!-- กล้องจะแสดงตรงนี้ -->
-        </div>
-        
-        <div id="label-container">
-            <!-- ผลลัพธ์การทำนายจะแสดงตรงนี้ -->
-        </div>
+        <div id="webcam-container"></div>
+        <div id="label-container"></div>
         
         <div class="timer-badge" id="timer-info" style="display: none;">
-            🔄 กำลังอัปเดตผลลัพธ์ทุกๆ 3 วินาที
+            🔄 กำลังประมวลผลลัพธ์ใหม่ทุกๆ 3 วินาที
         </div>
     </div>
 
@@ -144,76 +147,79 @@
     
     <script type="text/javascript">
         // ลิงก์โมเดลของคุณ
-        const URL = "https://teachablemachine.withgoogle.com/models/OD2g-JJnk/";
+        const URL = "https://teachablemachine.withgoogle.com/models/OD2g-JJnk/";[cite: 1]
 
         let model, webcam, labelContainer, maxPredictions;
+        let lastPredictionTime = 0; // ตัวแปรเก็บเวลาล่าสุดที่ทำนายผล
 
         async function init() {
-            // ปิดใช้งานปุ่มหลังจากกด เพื่อป้องกันการกดซ้ำ
             document.getElementById("start-btn").disabled = true;
             document.getElementById("start-btn").innerText = "กำลังโหลดโมเดล...";
 
-            const modelURL = URL + "model.json";
-            const metadataURL = URL + "metadata.json";
+            const modelURL = URL + "model.json";[cite: 1]
+            const metadataURL = URL + "metadata.json";[cite: 1]
 
             // โหลดโมเดล
-            model = await tmImage.load(modelURL, metadataURL);
-            maxPredictions = model.getTotalClasses();
+            model = await tmImage.load(modelURL, metadataURL);[cite: 1]
+            maxPredictions = model.getTotalClasses();[cite: 1]
 
-            // ตั้งค่ากล้อง (ปรับขนาดให้ใหญ่ขึ้นเล็กน้อยเป็น 280x280 เพื่อความสวยงาม)
-            const flip = true; 
+            // ตั้งค่ากล้อง
+            const flip = true;[cite: 1]
             webcam = new tmImage.Webcam(280, 280, flip); 
-            await webcam.setup(); 
-            await webcam.play();
+            await webcam.setup();[cite: 1]
+            await webcam.play();[cite: 1]
             
-            // ใช้ requestAnimationFrame สำหรับตัวภาพวิดีโอ (เพื่อให้ภาพกล้องเคลื่อนไหวลื่นไหล 60fps)
-            window.requestAnimationFrame(loopWebcam);
+            // เริ่มต้นลูปการทำงาน
+            window.requestAnimationFrame(loop);[cite: 1]
 
-            // แสดงหน้าต่างกล้องใน DOM
-            document.getElementById("webcam-container").innerHTML = ""; // ล้างข้อมูลเดิม
-            document.getElementById("webcam-container").appendChild(webcam.canvas);
+            // แสดงหน้าต่างกล้อง
+            document.getElementById("webcam-container").appendChild(webcam.canvas);[cite: 1]
             
-            labelContainer = document.getElementById("label-container");
-            labelContainer.innerHTML = ""; // ล้างข้อมูลเดิม
-            
-            for (let i = 0; i < maxPredictions; i++) {
+            labelContainer = document.getElementById("label-container");[cite: 1]
+            labelContainer.innerHTML = ""; 
+            for (let i = 0; i < maxPredictions; i++) {[cite: 1]
                 const div = document.createElement("div");
                 div.className = "prediction-bar";
-                labelContainer.appendChild(div);
+                labelContainer.appendChild(div);[cite: 1]
             }
 
             document.getElementById("start-btn").innerText = "ระบบกำลังทำงาน";
             document.getElementById("timer-info").style.display = "block";
-
-            // ทำนายครั้งแรกทันที
+            
+            // ตั้งค่าเวลาเริ่มต้นสำหรับการนับถอยหลังรอบแรก
+            lastPredictionTime = Date.now();
             await predict();
-
-            // ⭐️ ตั้งค่าให้เรียกฟังก์ชันทำนายผล (Predict) ทำงานทุก ๆ 3 วินาที (3000 มิลลิวินาที)
-            setInterval(async () => {
-                await predict();
-            }, 3000);
         }
 
-        // ฟังก์ชันอัปเดตเฟรมของกล้องให้เคลื่อนไหวลื่นไหล
-        function loopWebcam() {
-            webcam.update();
-            window.requestAnimationFrame(loopWebcam);
+        async function loop() {
+            webcam.update(); // อัปเดตภาพจากกล้องตลอดเวลาเพื่อให้ภาพไม่ค้าง[cite: 1]
+            
+            const currentTime = Date.now();
+            // ตรวจสอบว่าเวลาผ่านไปครบ 3 วินาที (3000 มิลลิวินาที) หรือยัง
+            if (currentTime - lastPredictionTime >= 3000) {
+                await predict(); // ทำนายผล[cite: 1]
+                lastPredictionTime = currentTime; // บันทึกเวลาล่าสุดที่ทำนาย
+            }
+            
+            window.requestAnimationFrame(loop);[cite: 1]
         }
 
-        // ฟังก์ชันทำนายผลลัพธ์ที่จะทำงานทุก 3 วินาที
         async function predict() {
-            const prediction = await model.predict(webcam.canvas);
-            for (let i = 0; i < maxPredictions; i++) {
-                // แปลงทศนิยมเป็นเปอร์เซ็นต์เพื่อให้ผู้ใช้ดูง่ายขึ้น (เช่น 0.85 -> 85%)
+            const prediction = await model.predict(webcam.canvas);[cite: 1]
+            for (let i = 0; i < maxPredictions; i++) {[cite: 1]
+                // แสดงผลลัพธ์เป็นเปอร์เซ็นต์แบบดูง่าย
                 const percentage = (prediction[i].probability * 100).toFixed(0);
                 
                 const classPrediction = `
                     <span>${prediction[i].className}</span>
                     <strong>${percentage}%</strong>
                 `;
-                labelContainer.childNodes[i].innerHTML = classPrediction;
+                labelContainer.childNodes[i].innerHTML = classPrediction;[cite: 1]
             }
         }
     </script>
 </body>
 </html>
+            
+       
+            
