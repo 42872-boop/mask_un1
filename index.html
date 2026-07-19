@@ -1,146 +1,217 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Vision System</title>
-    <style>
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            text-align: center;
-            width: 340px;
-        }
-        button {
-            background: #007aff;
-            color: white;
-            border: none;
-            padding: 14px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 12px;
-            width: 100%;
-            cursor: pointer;
-            margin-bottom: 20px;
-        }
-        button:disabled {
-            background: #d1d1d6;
-            cursor: not-allowed;
-        }
-        #webcam-container {
-            width: 280px;
-            height: 280px;
-            margin: 0 auto 20px;
-            background: #e5e7eb;
-            border-radius: 16px;
-            overflow: hidden;
-        }
-        #webcam-container canvas {
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: cover;
-        }
-        .result-item {
-            display: flex;
-            justify-content: space-between;
-            background: #f8f9fa;
-            padding: 12px 16px;
-            margin-bottom: 8px;
-            border-radius: 10px;
-            font-size: 15px;
-        }
-        .status {
-            font-size: 13px;
-            color: #8e8e93;
-            margin-top: 15px;
-        }
-    </style>
-</head>
-<body>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<div class="card">
-    <h2>AI Vision System</h2>
-    <button type="button" id="btn" onclick="init()">Start Camera</button>
-    <div id="webcam-container"></div>
-    <div id="label-container"></div>
-    <div class="status" id="status" style="display:none;">🔄 Updating predictions every 3 seconds</div>
-</div>
+<title>AI Camera Detection</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
-<script type="text/javascript">
-    const URL = "https://teachablemachine.withgoogle.com/models/OD2g-JJnk/";[cite: 2]
-    let model, webcam, labelContainer, maxPredictions;
-    let lastTime = 0;
+<style>
 
-    async function init() {
-        document.getElementById("btn").disabled = true;
-        document.getElementById("btn").innerText = "Loading Model...";
+body{
+    margin:0;
+    font-family:Arial,Helvetica,sans-serif;
+    background:#f4f6f9;
+}
 
-        try {
-            model = await tmImage.load(URL + "model.json", URL + "metadata.json");[cite: 2]
-            maxPredictions = model.getTotalClasses();[cite: 2]
+.container{
+    width:420px;
+    max-width:95%;
+    margin:40px auto;
+    background:#fff;
+    border-radius:15px;
+    box-shadow:0 5px 20px rgba(0,0,0,.2);
+    text-align:center;
+    padding:25px;
+}
 
-            webcam = new tmImage.Webcam(200, 200, true); 
-            await webcam.setup();[cite: 2]
-            await webcam.play();[cite: 2]
-            
-            window.requestAnimationFrame(loop);[cite: 2]
+h2{
+    margin-top:0;
+    color:#333;
+}
 
-            document.getElementById("webcam-container").appendChild(webcam.canvas);[cite: 2]
-            
-            labelContainer = document.getElementById("label-container");[cite: 2]
-            labelContainer.innerHTML = "";
-            for (let i = 0; i < maxPredictions; i++) {[cite: 2]
-                let div = document.createElement("div");
-                div.className = "result-item";
-                labelContainer.appendChild(div);[cite: 2]
-            }
+#webcam-container canvas{
+    border-radius:12px;
+    border:4px solid #4CAF50;
+}
 
-            document.getElementById("btn").innerText = "System Active";
-            document.getElementById("status").style.display = "block";
-            lastTime = Date.now();
+button{
 
-        } catch (e) {
-            alert("Camera Access Error: Please check permissions or run via a local server (e.g., Live Server).");
-            document.getElementById("btn").disabled = false;
-            document.getElementById("btn").innerText = "Try Again";
-        }
+    padding:12px 20px;
+    margin:10px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    color:white;
+    font-size:16px;
+}
+
+.start{
+    background:#28a745;
+}
+
+.stop{
+    background:#dc3545;
+}
+
+.result{
+
+    margin-top:20px;
+    text-align:left;
+}
+
+.result div{
+    background:#f8f9fa;
+    margin:8px 0;
+    padding:10px;
+    border-radius:8px;
+    font-size:18px;
+}
+
+.status{
+
+    margin:15px;
+    color:#0d6efd;
+    font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>📷 AI Camera Detection</h2>
+
+<div id="status" class="status">
+ยังไม่ได้เปิดกล้อง
+</div>
+
+<div id="webcam-container"></div>
+
+<div>
+
+<button class="start" onclick="init()">
+Start
+</button>
+
+<button class="stop" onclick="stopCamera()">
+Stop
+</button>
+
+</div>
+
+<div id="label-container" class="result"></div>
+
+</div>
+
+<script>
+
+const URL="https://teachablemachine.withgoogle.com/models/OD2g-JJnk/";
+
+let model;
+let webcam;
+let labelContainer;
+let maxPredictions;
+
+let intervalID=null;
+
+async function init(){
+
+    if(intervalID!=null){
+        return;
     }
 
-    async function loop() {
-        webcam.update();[cite: 2]
-        
-        let now = Date.now();
-        if (now - lastTime >= 3000) {
-            await predict();[cite: 2]
-            lastTime = now;
-        }
-        window.requestAnimationFrame(loop);[cite: 2]
+    document.getElementById("status").innerHTML="กำลังโหลดโมเดล...";
+
+    const modelURL=URL+"model.json";
+    const metadataURL=URL+"metadata.json";
+
+    model=await tmImage.load(modelURL,metadataURL);
+
+    maxPredictions=model.getTotalClasses();
+
+    webcam=new tmImage.Webcam(300,300,true);
+
+    await webcam.setup();
+
+    await webcam.play();
+
+    document.getElementById("webcam-container").innerHTML="";
+    document.getElementById("webcam-container").appendChild(webcam.canvas);
+
+    labelContainer=document.getElementById("label-container");
+    labelContainer.innerHTML="";
+
+    for(let i=0;i<maxPredictions;i++){
+
+        let div=document.createElement("div");
+        labelContainer.appendChild(div);
+
     }
 
-    async function predict() {
-        const prediction = await model.predict(webcam.canvas);[cite: 2]
-        for (let i = 0; i < maxPredictions; i++) {[cite: 2]
-            let percent = (prediction[i].probability * 100).toFixed(0);
-            labelContainer.childNodes[i].innerHTML = `
-                <span>${prediction[i].className}</span>
-                <strong>${percent}%</strong>
-            `;[cite: 2]
-        }
+    document.getElementById("status").innerHTML="✅ กล้องกำลังทำงาน";
+
+    function updateCamera(){
+
+        webcam.update();
+
+        requestAnimationFrame(updateCamera);
+
     }
+
+    updateCamera();
+
+    intervalID=setInterval(async()=>{
+
+        await predict();
+
+    },3000);
+
+}
+
+async function predict(){
+
+    const prediction=await model.predict(webcam.canvas);
+
+    prediction.sort((a,b)=>b.probability-a.probability);
+
+    for(let i=0;i<maxPredictions;i++){
+
+        labelContainer.childNodes[i].innerHTML=
+        "<b>"+prediction[i].className+"</b> : "+
+        (prediction[i].probability*100).toFixed(2)+" %";
+
+    }
+
+}
+
+function stopCamera(){
+
+    if(intervalID){
+
+        clearInterval(intervalID);
+
+        intervalID=null;
+
+    }
+
+    if(webcam){
+
+        webcam.stop();
+
+    }
+
+    document.getElementById("status").innerHTML="❌ หยุดกล้องแล้ว";
+
+}
+
 </script>
+
 </body>
 </html>
