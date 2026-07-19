@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Intelligent Scanner</title>
+    <title>AI Intelligent Scan Engine</title>
     
-    <!-- Google Font แนวเรียบหรูอ่านง่าย -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=Noto+Sans+Thai:wght@300;400;500&display=swap" rel="stylesheet">
     
     <style>
@@ -14,7 +13,7 @@
             --card-color: #ffffff;
             --text-dark: #0f172a;
             --text-muted: #64748b;
-            --accent-color: #0284c7;
+            --accent-success: #10b981;
         }
 
         body {
@@ -34,14 +33,14 @@
             background: var(--card-color);
             padding: 40px;
             border-radius: 32px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
             max-width: 440px;
             width: 100%;
             text-align: center;
         }
 
         h1 {
-            font-size: 1.25rem;
+            font-size: 1.3rem;
             font-weight: 600;
             margin: 0 0 8px 0;
             letter-spacing: -0.5px;
@@ -64,7 +63,6 @@
             cursor: pointer;
             transition: all 0.2s ease;
             width: 100%;
-            font-family: inherit;
         }
 
         .btn-primary:hover {
@@ -79,7 +77,8 @@
             transform: none;
         }
 
-        .camera-viewport {
+        .camera-box {
+            position: relative;
             width: 280px;
             height: 280px;
             margin: 32px auto;
@@ -92,10 +91,12 @@
             align-items: center;
         }
 
-        #webcam-container canvas {
+        /* บังคับวิดีโอจากกล้องทุกตัวให้ขยายเต็มพื้นที่ */
+        #webcam-container video, #webcam-container canvas {
             width: 100% !important;
             height: 100% !important;
-            object-fit: cover;
+            object-fit: cover !important;
+            border-radius: 24px;
         }
 
         #label-container {
@@ -115,7 +116,6 @@
             border: 1px solid transparent;
         }
 
-        /* เมื่อตัวไหนได้คะแนนสูงสุด แถบจะเด่นขึ้นมาแบบละมุน */
         .label-row.highlight {
             background-color: #f0fdf4;
             border-color: #bbf7d0;
@@ -129,6 +129,7 @@
 
         .label-row.highlight .label-name {
             color: #166534;
+            font-weight: 600;
         }
 
         .label-value {
@@ -157,7 +158,7 @@
         .indicator {
             width: 6px;
             height: 6px;
-            background-color: #10b981;
+            background-color: var(--accent-success);
             border-radius: 50%;
             animation: pulse 2s infinite;
         }
@@ -177,7 +178,7 @@
         
         <button type="button" class="btn-primary" id="start-btn" onclick="init()">เปิดใช้งานระบบสแกน</button>
         
-        <div class="camera-viewport">
+        <div class="camera-box">
             <div id="webcam-container"></div>
         </div>
         
@@ -185,7 +186,7 @@
         
         <div class="status-tracker" id="status-bar" style="display: none;">
             <div class="indicator"></div>
-            <span>กำลังประมวลผลลัพธ์ใหม่ทุกๆ 3.0 วินาที</span>
+            <span>กำลังสแกนและอัปเดตผลลัพธ์ใหม่ทุกๆ 3.0 วินาที</span>
         </div>
     </div>
 
@@ -193,64 +194,82 @@
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
     
     <script type="text/javascript">
-        const URL = "https://teachablemachine.withgoogle.com/models/OD2g-JJnk/";[cite: 2]
+        // ลิงก์โมเดล Teachable Machine
+        const URL = "https://teachablemachine.withgoogle.com/models/OD2g-JJnk/";
+
         let model, webcam, labelContainer, maxPredictions;
-        let lastScanTime = 0; // เก็บเวลาการสแกนรอบล่าสุด
+        let lastScanTime = 0; 
 
         async function init() {
-            document.getElementById("start-btn").disabled = true;
-            document.getElementById("start-btn").innerText = "กำลังเชื่อมต่อโมเดล...";
+            try {
+                document.getElementById("start-btn").disabled = true;
+                document.getElementById("start-btn").innerText = "กำลังเข้าถึงกล้องและโมเดล...";
 
-            const modelURL = URL + "model.json";[cite: 2]
-            const metadataURL = URL + "metadata.json";[cite: 2]
+                const modelURL = URL + "model.json";
+                const metadataURL = URL + "metadata.json";
 
-            model = await tmImage.load(modelURL, metadataURL);[cite: 2]
-            maxPredictions = model.getTotalClasses();[cite: 2]
+                // 1. โหลดโมเดล AI
+                model = await tmImage.load(modelURL, metadataURL);
+                maxPredictions = model.getTotalClasses();
 
-            const flip = true;[cite: 2]
-            webcam = new tmImage.Webcam(280, 280, flip); 
-            await webcam.setup();[cite: 2]
-            await webcam.play();[cite: 2]
-            
-            // สั่งรันลูปเฟรมวิดีโอสด
-            window.requestAnimationFrame(loop);[cite: 2]
+                // 2. ปรับโครงสร้างการเรียกกล้องใหม่ (ป้องกันกล้องค้างและไม่ขึ้นภาพ)
+                const flip = true; 
+                // ใช้ค่าเริ่มต้น 200x200 ตามมาตรฐาน SDK แต่เราใช้ CSS ไปขยายภาพให้สวยงามแทน
+                webcam = new tmImage.Webcam(200, 200, flip); 
+                
+                await webcam.setup(); // ขอสิทธิ์เข้าถึงกล้องจากบราวเซอร์
+                await webcam.play();
+                
+                // เริ่มรันลูปดึงเฟรมวิดีโอ
+                window.requestAnimationFrame(loop);
 
-            document.getElementById("webcam-container").appendChild(webcam.canvas);[cite: 2]
-            
-            labelContainer = document.getElementById("label-container");[cite: 2]
-            labelContainer.innerHTML = ""; 
-            
-            for (let i = 0; i < maxPredictions; i++) {[cite: 2]
-                const div = document.createElement("div");
-                div.className = "label-row";
-                labelContainer.appendChild(div);[cite: 2]
+                // นำกล้องใส่เข้าไปในหน้าเว็บ
+                const webcamContainer = document.getElementById("webcam-container");
+                webcamContainer.innerHTML = ""; 
+                webcamContainer.appendChild(webcam.canvas);
+                
+                // สร้างแถบแสดงข้อความผลลัพธ์
+                labelContainer = document.getElementById("label-container");
+                labelContainer.innerHTML = ""; 
+                for (let i = 0; i < maxPredictions; i++) {
+                    const div = document.createElement("div");
+                    div.className = "label-row";
+                    labelContainer.appendChild(div);
+                }
+
+                document.getElementById("start-btn").innerText = "ระบบสแกนทำงานอยู่";
+                document.getElementById("status-bar").style.display = "flex";
+                
+                lastScanTime = Date.now();
+                await predict();
+
+            } catch (error) {
+                console.error(error);
+                alert("ไม่สามารถเปิดกล้องได้: กรุณาตรวจสอบว่าบราวเซอร์อนุญาตให้เข้าถึงกล้อง หรือรันเว็บผ่าน Local Server (เช่น Live Server บน VS Code)");
+                document.getElementById("start-btn").disabled = false;
+                document.getElementById("start-btn").innerText = "ลองเปิดใช้งานอีกครั้ง";
             }
-
-            document.getElementById("start-btn").innerText = "ระบบทำงานเสร็จสิ้น";
-            document.getElementById("status-bar").style.display = "flex";
-            
-            // ตั้งค่าเวลาเริ่มต้นและเรียกสแกนทันทีในวิแรก
-            lastScanTime = Date.now();
-            await predict();
         }
 
         async function loop() {
-            webcam.update(); // อัปเดตเฟรมกล้องแบบเรียลไทม์ 60fps เพื่อไม่ให้ภาพกระตุกหรือค้าง
+            webcam.update(); // อัปเดตภาพสดจากกล้องต่อเนื่อง (ภาพกล้องจะไม่ค้าง)
             
             const now = Date.now();
-            // ตัวกั้นเวลา: ถ้าผ่านไปครบ 3000 มิลลิวินาที (3 วินาที) ถึงจะส่งภาพไปให้ AI อ่าน
+            // ตัวล็อกเวลา: จะยอมส่งภาพไปให้ AI คำนวณใหม่เฉพาะตอนที่ครบ 3 วินาที (3000ms) เท่านั้น
             if (now - lastScanTime >= 3000) {
-                await predict();[cite: 2]
-                lastScanTime = now; // บันทึกเวลารอบล่าสุดใหม่
+                await predict();
+                lastScanTime = now; 
             }
             
-            window.requestAnimationFrame(loop);[cite: 2]
+            window.requestAnimationFrame(loop);
         }
 
         async function predict() {
-            const prediction = await model.predict(webcam.canvas);[cite: 2]
+            if (!model || !webcam) return;
             
-            // หาคลาสที่ได้คะแนนสูงสุดในรอบนั้นๆ
+            const prediction = await model.predict(webcam.canvas);
+            
+            // หาคลาสที่คะแนนสูงสุด
             let maxIndex = 0;
             let maxVal = 0;
             for (let i = 0; i < maxPredictions; i++) {
@@ -260,12 +279,12 @@
                 }
             }
 
-            for (let i = 0; i < maxPredictions; i++) {[cite: 2]
+            for (let i = 0; i < maxPredictions; i++) {
                 const percentage = (prediction[i].probability * 100).toFixed(0);
                 const row = labelContainer.childNodes[i];
                 
-                // ไฮไลต์แถวที่ได้คะแนนสูงสุดและมีความแม่นยำเกิน 50% ให้เปลี่ยนเป็นสีเขียวพรีเมียม
-                if (i === maxIndex && percentage > 50) {
+                // ไฮไลต์สีเขียวพรีเมียมเฉพาะคลาสที่ค่าความมั่นใจสูงสุด
+                if (i === maxIndex && percentage > 40) {
                     row.className = "label-row highlight";
                 } else {
                     row.className = "label-row";
@@ -274,7 +293,7 @@
                 row.innerHTML = `
                     <span class="label-name">${prediction[i].className}</span>
                     <span class="label-value">${percentage}%</span>
-                `;[cite: 2]
+                `;
             }
         }
     </script>
