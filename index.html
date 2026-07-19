@@ -3,110 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Vision Processor</title>
+    <title>AI Intelligent Scanner</title>
     
-    <!-- Google Font แนวดิจิทัล/เทคโนโลยี -->
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Prompt:wght@300;500&display=swap" rel="stylesheet">
+    <!-- Google Font แนวเรียบหรูอ่านง่าย -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=Noto+Sans+Thai:wght@300;400;500&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --bg-main: #0b0f19;
-            --bg-card: #131a26;
-            --accent-neon: #00ffcc;
-            --accent-purple: #8b5cf6;
-            --text-main: #f3f4f6;
-            --text-muted: #6b7280;
+            --bg-color: #f8fafc;
+            --card-color: #ffffff;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --accent-color: #0284c7;
         }
 
         body {
-            font-family: 'Prompt', 'JetBrains Mono', sans-serif;
-            background-color: var(--bg-main);
-            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', 'Noto Sans Thai', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
             margin: 0;
-            padding: 20px;
+            padding: 24px;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
         }
 
-        .dashboard {
-            background: var(--bg-card);
-            padding: 35px;
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.05);
-            max-width: 420px;
+        .scanner-card {
+            background: var(--card-color);
+            padding: 40px;
+            border-radius: 32px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+            max-width: 440px;
             width: 100%;
-            border: 1px solid rgba(255, 255, 255, 0.03);
+            text-align: center;
         }
 
-        .title-area {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 25px;
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            letter-spacing: -0.5px;
         }
 
-        .title-area h1 {
-            font-size: 1.3rem;
-            margin: 0;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            background: linear-gradient(45deg, var(--accent-neon), var(--accent-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .btn-action {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            border: none;
-            padding: 14px;
-            font-size: 1rem;
-            font-weight: 500;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            width: 100%;
-            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
-            font-family: 'Prompt', sans-serif;
-        }
-
-        .btn-action:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
-        }
-
-        .btn-action:disabled {
-            background: #374151;
+        .subtitle {
+            font-size: 0.85rem;
             color: var(--text-muted);
+            margin-bottom: 28px;
+        }
+
+        .btn-primary {
+            background-color: var(--text-dark);
+            color: var(--card-color);
+            border: none;
+            padding: 16px 32px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            font-family: inherit;
+        }
+
+        .btn-primary:hover {
+            background-color: #1e293b;
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:disabled {
+            background-color: #e2e8f0;
+            color: #94a3b8;
             cursor: not-allowed;
             transform: none;
-            box-shadow: none;
         }
 
-        .view-finder {
-            position: relative;
-            margin: 25px auto;
-            border-radius: 20px;
+        .camera-viewport {
+            width: 280px;
+            height: 280px;
+            margin: 32px auto;
+            border-radius: 24px;
             overflow: hidden;
-            width: 260px;
-            height: 260px;
-            background-color: #1f2937;
-            border: 2px solid #374151;
-            box-shadow: 0 0 0 4px rgba(0, 255, 204, 0.05);
-        }
-
-        /* ใส่กรอบเล็งเป้าแอนิเมชันแนวไซไฟ */
-        .view-finder::before {
-            content: '';
-            position: absolute;
-            top: 10px; left: 10px; right: 10px; bottom: 10px;
-            border: 1px dashed rgba(0, 255, 204, 0.3);
-            border-radius: 12px;
-            pointer-events: none;
-            z-index: 10;
+            background-color: #f1f5f9;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         #webcam-container canvas {
@@ -116,78 +99,93 @@
         }
 
         #label-container {
-            margin-top: 25px;
+            margin-top: 32px;
             display: grid;
             gap: 12px;
         }
 
-        /* แถบผลลัพธ์ดีไซน์ล้ำๆ */
-        .result-node {
-            background: rgba(255, 255, 255, 0.02);
-            padding: 14px 18px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        .label-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: all 0.3s ease;
+            padding: 14px 20px;
+            background-color: #f8fafc;
+            border-radius: 14px;
+            transition: all 0.25s ease;
+            border: 1px solid transparent;
         }
 
-        .result-node.active {
-            border-color: var(--accent-neon);
-            background: rgba(0, 255, 204, 0.03);
+        /* เมื่อตัวไหนได้คะแนนสูงสุด แถบจะเด่นขึ้นมาแบบละมุน */
+        .label-row.highlight {
+            background-color: #f0fdf4;
+            border-color: #bbf7d0;
         }
 
-        .class-name {
+        .label-name {
             font-size: 0.95rem;
-            color: #d1d5db;
+            font-weight: 500;
+            color: #334155;
         }
 
-        .probability-value {
-            font-family: 'JetBrains Mono', monospace;
+        .label-row.highlight .label-name {
+            color: #166534;
+        }
+
+        .label-value {
+            font-size: 0.95rem;
             font-weight: 600;
-            color: var(--accent-neon);
-            background: rgba(0, 255, 204, 0.1);
+            color: #64748b;
+        }
+
+        .label-row.highlight .label-value {
+            color: #15803d;
+            background-color: #dcfce7;
             padding: 2px 8px;
-            border-radius: 6px;
-            font-size: 0.9rem;
+            border-radius: 8px;
         }
 
-        .status-pulse {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background-color: var(--accent-neon);
-            border-radius: 50%;
-            margin-right: 8px;
-            box-shadow: 0 0 8px var(--accent-neon);
-        }
-
-        .pulse-text {
+        .status-tracker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             font-size: 0.8rem;
             color: var(--text-muted);
-            margin-top: 15px;
-            letter-spacing: 0.5px;
+            margin-top: 24px;
+        }
+
+        .indicator {
+            width: 6px;
+            height: 6px;
+            background-color: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
     </style>
 </head>
 <body>
 
-    <div class="dashboard">
-        <div class="title-area">
-            <h1>AI Vision Engine</h1>
-        </div>
+    <div class="scanner-card">
+        <h1>Vision Intelligence</h1>
+        <div class="subtitle">ระบบตรวจจับและวิเคราะห์ภาพอัตโนมัติ</div>
         
-        <button type="button" class="btn-action" id="trigger-btn" onclick="init()">INITIALIZE SYSTEM</button>
+        <button type="button" class="btn-primary" id="start-btn" onclick="init()">เปิดใช้งานระบบสแกน</button>
         
-        <div class="view-finder">
+        <div class="camera-viewport">
             <div id="webcam-container"></div>
         </div>
         
         <div id="label-container"></div>
         
-        <div class="pulse-text" id="status-badge" style="display: none;">
-            <span class="status-pulse"></span> SCANNING CORE: INTERVAL 3.0s
+        <div class="status-tracker" id="status-bar" style="display: none;">
+            <div class="indicator"></div>
+            <span>กำลังประมวลผลลัพธ์ใหม่ทุกๆ 3.0 วินาที</span>
         </div>
     </div>
 
@@ -197,11 +195,11 @@
     <script type="text/javascript">
         const URL = "https://teachablemachine.withgoogle.com/models/OD2g-JJnk/";[cite: 2]
         let model, webcam, labelContainer, maxPredictions;
-        let isProcessing = false;
+        let lastScanTime = 0; // เก็บเวลาการสแกนรอบล่าสุด
 
         async function init() {
-            document.getElementById("trigger-btn").disabled = true;
-            document.getElementById("trigger-btn").innerText = "LOADING MODEL...";
+            document.getElementById("start-btn").disabled = true;
+            document.getElementById("start-btn").innerText = "กำลังเชื่อมต่อโมเดล...";
 
             const modelURL = URL + "model.json";[cite: 2]
             const metadataURL = URL + "metadata.json";[cite: 2]
@@ -209,78 +207,74 @@
             model = await tmImage.load(modelURL, metadataURL);[cite: 2]
             maxPredictions = model.getTotalClasses();[cite: 2]
 
-            // ตั้งค่ากล้องและให้รันวิดีโอสดลื่นๆ
             const flip = true;[cite: 2]
-            webcam = new tmImage.Webcam(260, 260, flip); 
+            webcam = new tmImage.Webcam(280, 280, flip); 
             await webcam.setup();[cite: 2]
             await webcam.play();[cite: 2]
             
-            // เริ่มต้นระบบแสดงภาพสด
-            window.requestAnimationFrame(renderLoop);[cite: 2]
+            // สั่งรันลูปเฟรมวิดีโอสด
+            window.requestAnimationFrame(loop);[cite: 2]
 
             document.getElementById("webcam-container").appendChild(webcam.canvas);[cite: 2]
             
             labelContainer = document.getElementById("label-container");[cite: 2]
             labelContainer.innerHTML = ""; 
+            
             for (let i = 0; i < maxPredictions; i++) {[cite: 2]
                 const div = document.createElement("div");
-                div.className = "result-node";
+                div.className = "label-row";
                 labelContainer.appendChild(div);[cite: 2]
             }
 
-            document.getElementById("trigger-btn").innerText = "SYSTEM ACTIVE";
-            document.getElementById("status-badge").style.display = "block";
-
-            // สั่งทำนายผลครั้งแรก
-            predict();
-
-            // ⏱️ วงจรสแกนภาพทุกๆ 3 วินาทีแบบเป็นอิสระ โดยไม่กวนลูปวิดีโอสด
-            setInterval(() => {
-                predict();
-            }, 3000);
+            document.getElementById("start-btn").innerText = "ระบบทำงานเสร็จสิ้น";
+            document.getElementById("status-bar").style.display = "flex";
+            
+            // ตั้งค่าเวลาเริ่มต้นและเรียกสแกนทันทีในวิแรก
+            lastScanTime = Date.now();
+            await predict();
         }
 
-        // ลูปนี้ใช้สำหรับอัปเดตตัวภาพหน้าจอให้ขยับแบบ 60fps ไม่ค้าง
-        function renderLoop() {
-            webcam.update();[cite: 2]
-            window.requestAnimationFrame(renderLoop);[cite: 2]
+        async function loop() {
+            webcam.update(); // อัปเดตเฟรมกล้องแบบเรียลไทม์ 60fps เพื่อไม่ให้ภาพกระตุกหรือค้าง
+            
+            const now = Date.now();
+            // ตัวกั้นเวลา: ถ้าผ่านไปครบ 3000 มิลลิวินาที (3 วินาที) ถึงจะส่งภาพไปให้ AI อ่าน
+            if (now - lastScanTime >= 3000) {
+                await predict();[cite: 2]
+                lastScanTime = now; // บันทึกเวลารอบล่าสุดใหม่
+            }
+            
+            window.requestAnimationFrame(loop);[cite: 2]
         }
 
-        // ฟังก์ชันประมวลผลโมเดล AI ที่จะถูกเรียกทุกๆ 3 วินาที
         async function predict() {
-            // ป้องกันการทำงานซ้อนทับกันกรณีที่นายผลช้า
-            if (isProcessing) return;
-            isProcessing = true;
+            const prediction = await model.predict(webcam.canvas);[cite: 2]
+            
+            // หาคลาสที่ได้คะแนนสูงสุดในรอบนั้นๆ
+            let maxIndex = 0;
+            let maxVal = 0;
+            for (let i = 0; i < maxPredictions; i++) {
+                if (prediction[i].probability > maxVal) {
+                    maxVal = prediction[i].probability;
+                    maxIndex = i;
+                }
+            }
 
-            try {
-                const prediction = await model.predict(webcam.canvas);[cite: 2]
+            for (let i = 0; i < maxPredictions; i++) {[cite: 2]
+                const percentage = (prediction[i].probability * 100).toFixed(0);
+                const row = labelContainer.childNodes[i];
                 
-                // หาค่าคลาสที่มีความน่าจะเป็นสูงสุด เพื่อนำมาไฮไลต์สีนีออน
-                let highestIndex = 0;
-                let highestVal = 0;
-                for (let i = 0; i < maxPredictions; i++) {
-                    if (prediction[i].probability > highestVal) {
-                        highestVal = prediction[i].probability;
-                        highestIndex = i;
-                    }
+                // ไฮไลต์แถวที่ได้คะแนนสูงสุดและมีความแม่นยำเกิน 50% ให้เปลี่ยนเป็นสีเขียวพรีเมียม
+                if (i === maxIndex && percentage > 50) {
+                    row.className = "label-row highlight";
+                } else {
+                    row.className = "label-row";
                 }
-
-                for (let i = 0; i < maxPredictions; i++) {[cite: 2]
-                    const percent = (prediction[i].probability * 100).toFixed(0);
-                    
-                    // ปรับแต่งแถบที่ AI มั่นใจที่สุดให้สว่างขึ้น
-                    const node = labelContainer.childNodes[i];
-                    node.className = (i === highestIndex && percent > 50) ? "result-node active" : "result-node";
-                    
-                    node.innerHTML = `
-                        <span class="class-name">${prediction[i].className}</span>
-                        <span class="probability-value">${percent}%</span>
-                    `;[cite: 2]
-                }
-            } catch (err) {
-                console.error("Prediction Error:", err);
-            } finally {
-                isProcessing = false;
+                
+                row.innerHTML = `
+                    <span class="label-name">${prediction[i].className}</span>
+                    <span class="label-value">${percentage}%</span>
+                `;[cite: 2]
             }
         }
     </script>
