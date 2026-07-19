@@ -1,301 +1,146 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Intelligent Scan Engine</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=Noto+Sans+Thai:wght@300;400;500&display=swap" rel="stylesheet">
-    
+    <title>AI Vision System</title>
     <style>
-        :root {
-            --bg-color: #f8fafc;
-            --card-color: #ffffff;
-            --text-dark: #0f172a;
-            --text-muted: #64748b;
-            --accent-success: #10b981;
-        }
-
         body {
-            font-family: 'Plus Jakarta Sans', 'Noto Sans Thai', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-dark);
-            margin: 0;
-            padding: 24px;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f0f2f5;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            -webkit-font-smoothing: antialiased;
+            margin: 0;
         }
-
-        .scanner-card {
-            background: var(--card-color);
-            padding: 40px;
-            border-radius: 32px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-            max-width: 440px;
-            width: 100%;
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
             text-align: center;
+            width: 340px;
         }
-
-        h1 {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin: 0 0 8px 0;
-            letter-spacing: -0.5px;
-        }
-
-        .subtitle {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 28px;
-        }
-
-        .btn-primary {
-            background-color: var(--text-dark);
-            color: var(--card-color);
+        button {
+            background: #007aff;
+            color: white;
             border: none;
-            padding: 16px 32px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            border-radius: 16px;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 12px;
             width: 100%;
+            cursor: pointer;
+            margin-bottom: 20px;
         }
-
-        .btn-primary:hover {
-            background-color: #1e293b;
-            transform: translateY(-1px);
-        }
-
-        .btn-primary:disabled {
-            background-color: #e2e8f0;
-            color: #94a3b8;
+        button:disabled {
+            background: #d1d1d6;
             cursor: not-allowed;
-            transform: none;
         }
-
-        .camera-box {
-            position: relative;
+        #webcam-container {
             width: 280px;
             height: 280px;
-            margin: 32px auto;
-            border-radius: 24px;
+            margin: 0 auto 20px;
+            background: #e5e7eb;
+            border-radius: 16px;
             overflow: hidden;
-            background-color: #f1f5f9;
-            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
-
-        /* บังคับวิดีโอจากกล้องทุกตัวให้ขยายเต็มพื้นที่ */
-        #webcam-container video, #webcam-container canvas {
+        #webcam-container canvas {
             width: 100% !important;
             height: 100% !important;
-            object-fit: cover !important;
-            border-radius: 24px;
+            object-fit: cover;
         }
-
-        #label-container {
-            margin-top: 32px;
-            display: grid;
-            gap: 12px;
-        }
-
-        .label-row {
+        .result-item {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 14px 20px;
-            background-color: #f8fafc;
-            border-radius: 14px;
-            transition: all 0.25s ease;
-            border: 1px solid transparent;
+            background: #f8f9fa;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            font-size: 15px;
         }
-
-        .label-row.highlight {
-            background-color: #f0fdf4;
-            border-color: #bbf7d0;
-        }
-
-        .label-name {
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: #334155;
-        }
-
-        .label-row.highlight .label-name {
-            color: #166534;
-            font-weight: 600;
-        }
-
-        .label-value {
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: #64748b;
-        }
-
-        .label-row.highlight .label-value {
-            color: #15803d;
-            background-color: #dcfce7;
-            padding: 2px 8px;
-            border-radius: 8px;
-        }
-
-        .status-tracker {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-top: 24px;
-        }
-
-        .indicator {
-            width: 6px;
-            height: 6px;
-            background-color: var(--accent-success);
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        .status {
+            font-size: 13px;
+            color: #8e8e93;
+            margin-top: 15px;
         }
     </style>
 </head>
 <body>
 
-    <div class="scanner-card">
-        <h1>Vision Intelligence</h1>
-        <div class="subtitle">ระบบตรวจจับและวิเคราะห์ภาพอัตโนมัติ</div>
-        
-        <button type="button" class="btn-primary" id="start-btn" onclick="init()">เปิดใช้งานระบบสแกน</button>
-        
-        <div class="camera-box">
-            <div id="webcam-container"></div>
-        </div>
-        
-        <div id="label-container"></div>
-        
-        <div class="status-tracker" id="status-bar" style="display: none;">
-            <div class="indicator"></div>
-            <span>กำลังสแกนและอัปเดตผลลัพธ์ใหม่ทุกๆ 3.0 วินาที</span>
-        </div>
-    </div>
+<div class="card">
+    <h2>AI Vision System</h2>
+    <button type="button" id="btn" onclick="init()">Start Camera</button>
+    <div id="webcam-container"></div>
+    <div id="label-container"></div>
+    <div class="status" id="status" style="display:none;">🔄 Updating predictions every 3 seconds</div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
-    
-    <script type="text/javascript">
-        // ลิงก์โมเดล Teachable Machine
-        const URL = "https://teachablemachine.withgoogle.com/models/OD2g-JJnk/";
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
-        let model, webcam, labelContainer, maxPredictions;
-        let lastScanTime = 0; 
+<script type="text/javascript">
+    const URL = "https://teachablemachine.withgoogle.com/models/OD2g-JJnk/";[cite: 2]
+    let model, webcam, labelContainer, maxPredictions;
+    let lastTime = 0;
 
-        async function init() {
-            try {
-                document.getElementById("start-btn").disabled = true;
-                document.getElementById("start-btn").innerText = "กำลังเข้าถึงกล้องและโมเดล...";
+    async function init() {
+        document.getElementById("btn").disabled = true;
+        document.getElementById("btn").innerText = "Loading Model...";
 
-                const modelURL = URL + "model.json";
-                const metadataURL = URL + "metadata.json";
+        try {
+            model = await tmImage.load(URL + "model.json", URL + "metadata.json");[cite: 2]
+            maxPredictions = model.getTotalClasses();[cite: 2]
 
-                // 1. โหลดโมเดล AI
-                model = await tmImage.load(modelURL, metadataURL);
-                maxPredictions = model.getTotalClasses();
+            webcam = new tmImage.Webcam(200, 200, true); 
+            await webcam.setup();[cite: 2]
+            await webcam.play();[cite: 2]
+            
+            window.requestAnimationFrame(loop);[cite: 2]
 
-                // 2. ปรับโครงสร้างการเรียกกล้องใหม่ (ป้องกันกล้องค้างและไม่ขึ้นภาพ)
-                const flip = true; 
-                // ใช้ค่าเริ่มต้น 200x200 ตามมาตรฐาน SDK แต่เราใช้ CSS ไปขยายภาพให้สวยงามแทน
-                webcam = new tmImage.Webcam(200, 200, flip); 
-                
-                await webcam.setup(); // ขอสิทธิ์เข้าถึงกล้องจากบราวเซอร์
-                await webcam.play();
-                
-                // เริ่มรันลูปดึงเฟรมวิดีโอ
-                window.requestAnimationFrame(loop);
-
-                // นำกล้องใส่เข้าไปในหน้าเว็บ
-                const webcamContainer = document.getElementById("webcam-container");
-                webcamContainer.innerHTML = ""; 
-                webcamContainer.appendChild(webcam.canvas);
-                
-                // สร้างแถบแสดงข้อความผลลัพธ์
-                labelContainer = document.getElementById("label-container");
-                labelContainer.innerHTML = ""; 
-                for (let i = 0; i < maxPredictions; i++) {
-                    const div = document.createElement("div");
-                    div.className = "label-row";
-                    labelContainer.appendChild(div);
-                }
-
-                document.getElementById("start-btn").innerText = "ระบบสแกนทำงานอยู่";
-                document.getElementById("status-bar").style.display = "flex";
-                
-                lastScanTime = Date.now();
-                await predict();
-
-            } catch (error) {
-                console.error(error);
-                alert("ไม่สามารถเปิดกล้องได้: กรุณาตรวจสอบว่าบราวเซอร์อนุญาตให้เข้าถึงกล้อง หรือรันเว็บผ่าน Local Server (เช่น Live Server บน VS Code)");
-                document.getElementById("start-btn").disabled = false;
-                document.getElementById("start-btn").innerText = "ลองเปิดใช้งานอีกครั้ง";
+            document.getElementById("webcam-container").appendChild(webcam.canvas);[cite: 2]
+            
+            labelContainer = document.getElementById("label-container");[cite: 2]
+            labelContainer.innerHTML = "";
+            for (let i = 0; i < maxPredictions; i++) {[cite: 2]
+                let div = document.createElement("div");
+                div.className = "result-item";
+                labelContainer.appendChild(div);[cite: 2]
             }
+
+            document.getElementById("btn").innerText = "System Active";
+            document.getElementById("status").style.display = "block";
+            lastTime = Date.now();
+
+        } catch (e) {
+            alert("Camera Access Error: Please check permissions or run via a local server (e.g., Live Server).");
+            document.getElementById("btn").disabled = false;
+            document.getElementById("btn").innerText = "Try Again";
         }
+    }
 
-        async function loop() {
-            webcam.update(); // อัปเดตภาพสดจากกล้องต่อเนื่อง (ภาพกล้องจะไม่ค้าง)
-            
-            const now = Date.now();
-            // ตัวล็อกเวลา: จะยอมส่งภาพไปให้ AI คำนวณใหม่เฉพาะตอนที่ครบ 3 วินาที (3000ms) เท่านั้น
-            if (now - lastScanTime >= 3000) {
-                await predict();
-                lastScanTime = now; 
-            }
-            
-            window.requestAnimationFrame(loop);
+    async function loop() {
+        webcam.update();[cite: 2]
+        
+        let now = Date.now();
+        if (now - lastTime >= 3000) {
+            await predict();[cite: 2]
+            lastTime = now;
         }
+        window.requestAnimationFrame(loop);[cite: 2]
+    }
 
-        async function predict() {
-            if (!model || !webcam) return;
-            
-            const prediction = await model.predict(webcam.canvas);
-            
-            // หาคลาสที่คะแนนสูงสุด
-            let maxIndex = 0;
-            let maxVal = 0;
-            for (let i = 0; i < maxPredictions; i++) {
-                if (prediction[i].probability > maxVal) {
-                    maxVal = prediction[i].probability;
-                    maxIndex = i;
-                }
-            }
-
-            for (let i = 0; i < maxPredictions; i++) {
-                const percentage = (prediction[i].probability * 100).toFixed(0);
-                const row = labelContainer.childNodes[i];
-                
-                // ไฮไลต์สีเขียวพรีเมียมเฉพาะคลาสที่ค่าความมั่นใจสูงสุด
-                if (i === maxIndex && percentage > 40) {
-                    row.className = "label-row highlight";
-                } else {
-                    row.className = "label-row";
-                }
-                
-                row.innerHTML = `
-                    <span class="label-name">${prediction[i].className}</span>
-                    <span class="label-value">${percentage}%</span>
-                `;
-            }
+    async function predict() {
+        const prediction = await model.predict(webcam.canvas);[cite: 2]
+        for (let i = 0; i < maxPredictions; i++) {[cite: 2]
+            let percent = (prediction[i].probability * 100).toFixed(0);
+            labelContainer.childNodes[i].innerHTML = `
+                <span>${prediction[i].className}</span>
+                <strong>${percent}%</strong>
+            `;[cite: 2]
         }
-    </script>
+    }
+</script>
 </body>
 </html>
